@@ -21,17 +21,17 @@ export function testPolygonContainment(
   const turfPolygon = polygon(polygonData.coordinates);
 
   const containmentResults = attestations.map((attestation, index) => {
-    console.log(`\ndecoded attestation ${index + 1} data\n`, JSON.stringify(JSON.parse(attestation.data), null, 2));
+    console.log(`decoded attestation ${index + 1} data`);
 
     const locationData = extractLocationFromAttestation(attestation);
-    console.log(`\nextracted location from attestation ${index + 1}\n`, JSON.stringify(locationData, null, 2));
+    console.log(`extracted location from attestation ${index + 1}`);
 
     // Create turf point from the attestation location
     const turfPoint = point(locationData.coordinates);
 
     // Test containment
     const isContained = booleanContains(turfPolygon, turfPoint);
-    console.log(`\nattestation ${index + 1} point ${isContained ? 'IS' : 'IS NOT'} contained in polygon\n`);
+    console.log(`attestation ${index + 1} point ${isContained ? 'IS' : 'IS NOT'} contained in polygon\n`);
 
     return {
       attestationId: attestation.uid,

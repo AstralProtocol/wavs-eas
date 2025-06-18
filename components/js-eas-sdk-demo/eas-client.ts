@@ -127,10 +127,10 @@ export class EASGraphQLClient {
 
     const locationAttestation = await this.fetchLocationAttestation(endpoint, locationUID);
     if (locationAttestation) {
-      console.log(`\nFound location attestation: ${locationAttestation.id}`);
+      console.log(`Found location attestation: ${locationAttestation.id}`);
       return convertRawAttestationToData(locationAttestation);
     } else {
-      console.log(`\nNo location attestation found for locationUID: ${locationUID}`);
+      console.log(`No location attestation found for locationUID: ${locationUID}`);
       return null;
     }
   }

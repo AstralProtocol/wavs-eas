@@ -13,7 +13,6 @@ export async function compute(input: Uint8Array): Promise<Uint8Array> {
 
   const client = new EASGraphQLClient();
   const { attestations, locationAttestation } = await client.fetchAttestations(Number(chainId), attestationId);
-  console.log(`\nreceived ${attestations.length} attestations\n`);
 
   if (!locationAttestation) {
     throw new Error("No location attestation found for polygon containment testing");
