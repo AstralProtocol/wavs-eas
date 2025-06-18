@@ -6,7 +6,7 @@ import { extractDecodedDataFromRaw } from "./data-utils";
  * @param rawAttestation The raw attestation object from GraphQL
  * @returns AttestationData object
  */
-export function convertRawAttestationToData(rawAttestation: any): AttestationData {
+export function convertGraphQLResponseToAttestationData(rawAttestation: any): AttestationData {
   return {
     uid: rawAttestation.id,
     schemaId: rawAttestation.schemaId,
@@ -91,7 +91,7 @@ export class EASGraphQLClient {
     console.log(`\nTotal attestations to process: ${referencingAttestations.length}`);
 
     return {
-      attestations: referencingAttestations.map((attestation: any) => convertRawAttestationToData(attestation)),
+      attestations: referencingAttestations.map((attestation: any) => convertGraphQLResponseToAttestationData(attestation)),
       locationUID
     };
   }
@@ -133,7 +133,7 @@ export class EASGraphQLClient {
     const locationAttestation = await this.fetchLocationAttestation(endpoint, locationUID);
     if (locationAttestation) {
       console.log(`Found location attestation: ${locationAttestation.id}`);
-      return convertRawAttestationToData(locationAttestation);
+      return convertGraphQLResponseToAttestationData(locationAttestation);
     } else {
       console.log(`No location attestation found for locationUID: ${locationUID}`);
       return null;
