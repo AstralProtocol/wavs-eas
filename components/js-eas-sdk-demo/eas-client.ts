@@ -52,6 +52,28 @@ export class EASGraphQLClient {
 
     console.log("attestationId", attestationId);
 
+    // Fetch main attestations (original + referencing)
+    const { attestations, locationUID } = await this.fetchMainAttestations(endpoint, attestationId);
+
+    // Fetch location attestation if locationUID is available
+    const locationAttestation = await this.fetchLocationData(endpoint, locationUID);
+
+    return {
+      attestations,
+      locationAttestation
+    };
+  }
+
+  /**
+   * Fetches the main attestations (original + referencing) and extracts locationUID
+   * @param endpoint The GraphQL endpoint URL
+   * @param attestationId The UID of the attestation to fetch
+   * @returns Object containing attestations array and extracted locationUID
+   */
+  private async fetchMainAttestations(endpoint: string, attestationId: string): Promise<{
+    attestations: AttestationData[];
+    locationUID: string | null;
+  }> {
     // Step 1: Fetch the original attestation and any that reference it
     const initialData = await this.fetchInitialAttestations(endpoint, attestationId);
 
@@ -79,18 +101,6 @@ export class EASGraphQLClient {
       console.log(`\nFound ${initialData.attestations.length} attestations referencing: ${attestationId}`);
     }
 
-    // Step 2: If we have a locationUID, fetch that attestation too
-    let locationAttestationData: AttestationData | null = null;
-    if (locationUID) {
-      const locationAttestation = await this.fetchLocationAttestation(endpoint, locationUID);
-      if (locationAttestation) {
-        locationAttestationData = convertRawAttestationToData(locationAttestation);
-        console.log(`\nFound location attestation: ${locationAttestation.id}`);
-      } else {
-        console.log(`\nNo location attestation found for locationUID: ${locationUID}`);
-      }
-    }
-
     // Ensure we have at least one attestation
     if (allAttestations.length === 0) {
       throw new Error(`No attestations found for attestationId: ${attestationId}`);
@@ -100,8 +110,29 @@ export class EASGraphQLClient {
 
     return {
       attestations: allAttestations.map((attestation: any) => convertRawAttestationToData(attestation)),
-      locationAttestation: locationAttestationData
+      locationUID
     };
+  }
+
+  /**
+   * Fetches location attestation data if locationUID is provided
+   * @param endpoint The GraphQL endpoint URL
+   * @param locationUID The UID of the location attestation to fetch
+   * @returns The location attestation data or null if not found/not provided
+   */
+  private async fetchLocationData(endpoint: string, locationUID: string | null): Promise<AttestationData | null> {
+    if (!locationUID) {
+      return null;
+    }
+
+    const locationAttestation = await this.fetchLocationAttestation(endpoint, locationUID);
+    if (locationAttestation) {
+      console.log(`\nFound location attestation: ${locationAttestation.id}`);
+      return convertRawAttestationToData(locationAttestation);
+    } else {
+      console.log(`\nNo location attestation found for locationUID: ${locationUID}`);
+      return null;
+    }
   }
 
   /**
