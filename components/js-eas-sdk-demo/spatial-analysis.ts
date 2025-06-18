@@ -1,5 +1,6 @@
 import booleanContains from "@turf/boolean-contains";
 import { point, polygon } from "@turf/helpers";
+import type { Feature, Polygon } from "geojson";
 import { AttestationData, ContainmentResult } from "./types";
 import { extractLocationFromAttestation } from "./data-utils";
 
@@ -21,6 +22,15 @@ export function testPolygonContainment(
   const turfPolygon = polygon(polygonData.coordinates);
 
   const containmentResults = attestations.map((attestation, index) => {
+    return validateObservation(index, attestation, turfPolygon);
+  });
+
+  console.log(`\ncontainment test results (${containmentResults.length} total)\n`, JSON.stringify(containmentResults, null, 2));
+
+  return containmentResults;
+}
+
+function validateObservation(index: number, attestation: AttestationData, turfPolygon: Feature<Polygon>) {
     console.log(`decoded attestation ${index + 1} data`);
 
     const locationData = extractLocationFromAttestation(attestation);
@@ -34,13 +44,8 @@ export function testPolygonContainment(
     console.log(`attestation ${index + 1} point ${isContained ? 'IS' : 'IS NOT'} contained in polygon\n`);
 
     return {
-      attestationId: attestation.uid,
-      location: locationData,
-      isContainedInPolygon: isContained
+        attestationId: attestation.uid,
+        location: locationData,
+        isContainedInPolygon: isContained
     };
-  });
-
-  console.log(`\ncontainment test results (${containmentResults.length} total)\n`, JSON.stringify(containmentResults, null, 2));
-
-  return containmentResults;
 }
