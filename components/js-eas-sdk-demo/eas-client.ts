@@ -74,45 +74,50 @@ export class EASGraphQLClient {
     attestations: AttestationData[];
     locationUID: string | null;
   }> {
-    // Step 1: Fetch the original attestation and any that reference it
+    // Fetch the original attestation and any that reference it
     const initialData = await this.fetchInitialAttestations(endpoint, attestationId);
 
-    const allAttestations: any[] = [];
-    let locationUID: string | null = null;
+    // Extract locationUID from the original attestation (if it exists)
+    const locationUID = this.extractLocationUID(initialData);
 
-    // Process the original attestation (only for extracting locationUID, not for final results)
-    if (initialData.attestation) {
-      // Extract locationUID from decodedDataJson
-      try {
-        const decodedData = extractDecodedDataFromRaw(initialData.attestation.decodedDataJson);
-        locationUID = decodedData.locationUID;
-        console.log(`\nFound original attestation: ${initialData.attestation.id} (used for locationUID extraction only)`);
-        if (locationUID) {
-          console.log(`\nExtracted locationUID: ${locationUID}`);
-        }
-      } catch (error) {
-        console.log(`\nWarning: Could not parse decodedDataJson for original attestation: ${error}`);
-      }
+    // Process referencing attestations for final results
+    const referencingAttestations = initialData.attestations || [];
+    if (referencingAttestations.length > 0) {
+      console.log(`\nFound ${referencingAttestations.length} attestations referencing ${attestationId}`);
+    } else {
+      throw new Error(`No attestations found referencing attestationId: ${attestationId}`);
     }
 
-    // Add referencing attestations
-    if (initialData.attestations && initialData.attestations.length > 0) {
-      allAttestations.push(...initialData.attestations);
-      console.log(`\nFound ${initialData.attestations.length} attestations referencing: ${attestationId}`);
-    }
-
-    // Ensure we have at least one attestation
-    if (allAttestations.length === 0) {
-      throw new Error(`No attestations found for attestationId: ${attestationId}`);
-    }
-
-    console.log(`\nTotal attestations to process: ${allAttestations.length}`);
+    console.log(`\nTotal attestations to process: ${referencingAttestations.length}`);
 
     return {
-      attestations: allAttestations.map((attestation: any) => convertRawAttestationToData(attestation)),
+      attestations: referencingAttestations.map((attestation: any) => convertRawAttestationToData(attestation)),
       locationUID
     };
   }
+
+    private extractLocationUID(initialData: any): string {
+        const attestation = initialData.attestation;
+        if (!attestation) {
+            throw new Error(`No attestation found for attestationId: ${initialData.uid}`);
+        }
+        console.log(`\nFound original attestation: ${attestation.id} (used for locationUID extraction only)`);
+
+        if (attestation.decodedDataJson) {
+            try {
+                const decodedData = extractDecodedDataFromRaw(attestation.decodedDataJson);
+                const locationUID = decodedData.locationUID || null;
+                if (locationUID) {
+                    console.log(`Extracted locationUID: ${locationUID}`);
+                }
+                return locationUID;
+            } catch (error) {
+                console.log(`Warning: Could not parse decodedDataJson for attestation ${attestation.id}: ${error}`);
+            }
+        }
+
+        throw new Error(`No locationUID found for attestation ${attestation.id}`);
+    }
 
   /**
    * Fetches location attestation data if locationUID is provided
