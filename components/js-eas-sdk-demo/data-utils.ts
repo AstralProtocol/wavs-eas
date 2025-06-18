@@ -37,9 +37,8 @@ export function extractDecodedAttestationData(decodedData: any[]): Record<string
  * @returns Parsed location data object
  */
 export function extractLocationFromAttestation(attestationData: { data: string }): any {
-  const attestationJson = JSON.parse(attestationData.data);
-  const decodedData = extractDecodedAttestationData(attestationJson);
-  return JSON.parse(decodedData.location);
+  const locationData = extractFieldFromAttestation(attestationData, 'location');
+  return JSON.parse(locationData);
 }
 
 /**
